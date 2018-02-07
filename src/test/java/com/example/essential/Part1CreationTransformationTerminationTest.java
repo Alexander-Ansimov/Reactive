@@ -151,6 +151,21 @@ public class Part1CreationTransformationTerminationTest {
     }
 
     @Test
+    public void iterate10TimesTest() throws Exception {
+        ArgumentCaptor<Integer> captor = ArgumentCaptor.forClass(Integer.class);
+        PowerMockito.spy(Observable.class);
+        PowerMockito
+                .doAnswer(InvocationOnMock::callRealMethod)
+                .when(Observable.class, "range", anyInt(), captor.capture());
+        AtomicInteger counter = new AtomicInteger();
+
+        iterateNTimes(10, counter);
+
+        Assert.assertEquals("Atomic counter must be increased to 10", 10, counter.get());
+        Assert.assertEquals("Observable#range(int, int) should be called", 1, captor.getAllValues().size());
+    }
+
+    @Test
     public void adaptToObservableTest() {
         TestStringEmitter emitter = new TestStringEmitter();
 
@@ -169,25 +184,19 @@ public class Part1CreationTransformationTerminationTest {
     }
 
     @Test
-    public void iterate10TimesTest() throws Exception {
-        ArgumentCaptor<Integer> captor = ArgumentCaptor.forClass(Integer.class);
-        PowerMockito.spy(Observable.class);
-        PowerMockito
-                .doAnswer(InvocationOnMock::callRealMethod)
-                .when(Observable.class, "range", anyInt(), captor.capture());
-        AtomicInteger counter = new AtomicInteger();
-
-        iterateNTimes(10, counter);
-
-        Assert.assertEquals("Atomic counter must be increased to 10", 10, counter.get());
-        Assert.assertEquals("Observable#range(int, int) should be called", 1, captor.getAllValues().size());
-    }
-
-    @Test
     public void mapToStringTest() {
         mapToString(Observable.just(1L, 2L, 3L, 4L))
                 .test()
                 .assertValues("1", "2", "3", "4")
+                .assertCompleted()
+                .awaitTerminalEvent();
+    }
+
+    @Test
+    public void filterTest() {
+        findAllWordsWithPrefixABC(Observable.just("asdas", "gdfgsdfg", "ABCasda"))
+                .test()
+                .assertValue("ABCasda")
                 .assertCompleted()
                 .awaitTerminalEvent();
     }
@@ -218,15 +227,6 @@ public class Part1CreationTransformationTerminationTest {
                 .assertValues("ABC", "DEFG", "HJKL")
                 .awaitTerminalEvent()
                 .assertCompleted();
-    }
-
-    @Test
-    public void filterTest() {
-        findAllWordsWithPrefixABC(Observable.just("asdas", "gdfgsdfg", "ABCasda"))
-                .test()
-                .assertValue("ABCasda")
-                .assertCompleted()
-                .awaitTerminalEvent();
     }
 
     @Test
